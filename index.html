@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lori: The Offbeat Hero - Pilot Game</title>
+    <title>Lori: The Offbeat Hero - Mobile Game</title>
     <style>
         body {
             margin: 0;
@@ -22,6 +22,7 @@
             left: 10px;
             color: #fff;
             font-size: 18px;
+            z-index: 10;
         }
 
         #gameOver {
@@ -35,6 +36,30 @@
             padding: 20px;
             display: none;
         }
+
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .btn {
+            width: 60px;
+            height: 60px;
+            background-color: #333;
+            color: white;
+            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            user-select: none;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -43,7 +68,13 @@
         <p>Score: <span id="score">0</span></p>
         <p>Collectibles: <span id="collectibles">0</span></p>
     </div>
-    <div id="gameOver">Game Over! Press F5 to Restart</div>
+    <div id="gameOver">Game Over! Press F5 or tap to restart</div>
+
+    <div class="controls">
+        <div class="btn" id="leftBtn">&#9664;</div>
+        <div class="btn" id="jumpBtn">&#9650;</div>
+        <div class="btn" id="rightBtn">&#9654;</div>
+    </div>
 
     <canvas id="gameCanvas"></canvas>
 
@@ -79,10 +110,20 @@
         const items = [];
         const enemies = [];
 
+        // Touch controls state
+        let moveLeft = false;
+        let moveRight = false;
+        let jump = false;
+
         // Controls
-        const keys = {};
-        document.addEventListener('keydown', (e) => keys[e.key] = true);
-        document.addEventListener('keyup', (e) => keys[e.key] = false);
+        document.getElementById('leftBtn').addEventListener('mousedown', () => moveLeft = true);
+        document.getElementById('rightBtn').addEventListener('mousedown', () => moveRight = true);
+        document.getElementById('jumpBtn').addEventListener('mousedown', () => jump = true);
+        document.querySelectorAll('.btn').forEach(btn => btn.addEventListener('mouseup', () => {
+            moveLeft = false;
+            moveRight = false;
+            jump = false;
+        }));
 
         // Create collectibles
         for (let i = 0; i < 5; i++) {
@@ -102,7 +143,7 @@
                 y: groundLevel,
                 width: 40,
                 height: 60,
-                speed: Math.random() * 3 + 1  // Variable enemy speed
+                speed: Math.random() * 3 + 1
             });
         }
 
@@ -130,14 +171,12 @@
             }
 
             // Movement logic
-            if (keys['ArrowRight'] || keys['d']) lori.x += lori.speed * (lori.isSprinting ? 2 : 1);
-            if (keys['ArrowLeft'] || keys['a']) lori.x -= lori.speed * (lori.isSprinting ? 2 : 1);
-            if ((keys['ArrowUp'] || keys['w']) && !lori.isJumping) {
+            if (moveRight) lori.x += lori.speed * (lori.isSprinting ? 2 : 1);
+            if (moveLeft) lori.x -= lori.speed * (lori.isSprinting ? 2 : 1);
+            if (jump && !lori.isJumping) {
                 lori.isJumping = true;
                 lori.velocityY = -10;
             }
-            if (keys['Shift']) lori.isSprinting = true;
-            else lori.isSprinting = false;
 
             // Prevent Lori from going off-screen
             lori.x = Math.max(0, Math.min(canvas.width - lori.width, lori.x));
@@ -148,8 +187,8 @@
                 ctx.fillRect(item.x, item.y, item.width, item.height);
                 if (isColliding(lori, item)) {
                     collectibles++;
-                    score += 10;  // Add score when collecting items
-                    items.splice(index, 1); // Remove collected item
+                    score += 10;
+                    items.splice(index, 1);
                 }
             });
 
@@ -161,7 +200,7 @@
                 if (enemy.x > canvas.width - enemy.width || enemy.x < 0) enemy.speed *= -1;
 
                 if (isColliding(lori, enemy)) {
-                    health -= 0.5;  // Gradual health reduction to give players a chance to recover
+                    health -= 0.5;
                     if (health <= 0) {
                         health = 0;
                         triggerGameOver();
@@ -191,6 +230,7 @@
         function triggerGameOver() {
             gameOver = true;
             document.getElementById('gameOver').style.display = 'block';
+            canvas.addEventListener('click', () => location.reload());  // Restart on tap
         }
 
         gameLoop();
