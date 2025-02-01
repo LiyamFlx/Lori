@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lori: The Offbeat Hero - Demo Game</title>
+    <title>Lori: The Offbeat Hero - Enhanced UI</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
-            font-family: 'Arial', sans-serif;
-            background-color: #cce7ff;
+            font-family: 'Poppins', sans-serif;
+            background-color: #87ceeb;
         }
 
         canvas {
@@ -23,6 +23,15 @@
             color: #fff;
             font-size: 18px;
             z-index: 10;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        #ui div {
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
 
         #gameOver {
@@ -34,7 +43,9 @@
             font-size: 36px;
             background-color: rgba(0, 0, 0, 0.7);
             padding: 20px;
+            border-radius: 10px;
             display: none;
+            text-align: center;
         }
 
         .controls {
@@ -43,32 +54,62 @@
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 10px;
+            gap: 15px;
             z-index: 10;
         }
 
         .btn {
-            width: 60px;
-            height: 60px;
-            background-color: #333;
+            width: 70px;
+            height: 70px;
+            background-color: #ff6f61;
             color: white;
-            font-size: 24px;
+            font-size: 28px;
             display: flex;
             justify-content: center;
             align-items: center;
             border-radius: 50%;
             user-select: none;
             cursor: pointer;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        #healthBar {
+            background-color: #ddd;
+            border-radius: 5px;
+            width: 200px;
+            height: 20px;
+            overflow: hidden;
+            border: 2px solid #fff;
+        }
+
+        #healthFill {
+            height: 100%;
+            background-color: #32cd32;
+            width: 100%;
+            transition: width 0.3s ease;
+        }
+
+        #icon {
+            width: 30px;
+            height: 30px;
+            background: url('https://via.placeholder.com/30/ffffff/ff4d4d?text=L') no-repeat center center;
+            background-size: cover;
+            border-radius: 50%;
         }
     </style>
 </head>
 <body>
     <div id="ui">
-        <p>Health: <span id="health">100</span></p>
-        <p>Score: <span id="score">0</span></p>
-        <p>Collectibles: <span id="collectibles">0</span></p>
+        <div id="healthContainer">
+            <div id="icon"></div>
+            <div id="healthBar">
+                <div id="healthFill"></div>
+            </div>
+        </div>
+        <div>Score: <span id="score">0</span></div>
+        <div>Collectibles: <span id="collectibles">0</span></div>
     </div>
-    <div id="gameOver">Game Over! Press F5 or tap to restart</div>
+    <div id="gameOver">Game Over!<br>Tap to restart</div>
 
     <div class="controls">
         <div class="btn" id="leftBtn">&#9664;</div>
@@ -90,7 +131,14 @@
         let collectibles = 0;
         let gameOver = false;
 
+        // Background elements for parallax
+        const backgroundImage = new Image();
+        backgroundImage.src = 'https://via.placeholder.com/800x400/87ceeb/ffffff?text=Background'; // Placeholder image
+
         // Lori's character
+        const loriImage = new Image();
+        loriImage.src = 'https://via.placeholder.com/50x75/ff4d4d/ffffff?text=Lori'; // Placeholder for Lori sprite
+
         const lori = {
             x: 50,
             y: canvas.height - 150,
@@ -153,13 +201,15 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+            // Draw parallax background
+            ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height / 2);
+
             // Draw ground
             ctx.fillStyle = '#654321';
             ctx.fillRect(0, groundLevel + lori.height, canvas.width, 50);
 
             // Draw Lori
-            ctx.fillStyle = '#ff4d4d';
-            ctx.fillRect(lori.x, lori.y, lori.width, lori.height);
+            ctx.drawImage(loriImage, lori.x, lori.y, lori.width, lori.height);
 
             // Apply gravity
             if (lori.y < groundLevel) {
@@ -185,6 +235,8 @@
             items.forEach((item, index) => {
                 ctx.fillStyle = item.color;
                 ctx.fillRect(item.x, item.y, item.width, item.height);
+                ctx.strokeStyle = '#ffd700';
+                ctx.strokeRect(item.x, item.y, item.width, item.height); // Glow effect
                 if (isColliding(lori, item)) {
                     collectibles++;
                     score += 10;
@@ -209,7 +261,7 @@
             });
 
             // Update UI
-            document.getElementById('health').textContent = Math.max(0, Math.round(health));
+            document.getElementById('healthFill').style.width = `${health}%`;
             document.getElementById('score').textContent = score;
             document.getElementById('collectibles').textContent = collectibles;
 
@@ -230,10 +282,4 @@
         function triggerGameOver() {
             gameOver = true;
             document.getElementById('gameOver').style.display = 'block';
-            canvas.addEventListener('click', () => location.reload());  // Restart on tap
-        }
-
-        gameLoop();
-    </script>
-</body>
-</html>
+            canvas.addEventListener('click', () => location.reload());  // Restart on
