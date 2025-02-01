@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lori: The Offbeat Hero - Enhanced UI</title>
+    <title>Lori: The Offbeat Hero - Enhanced Visuals</title>
     <style>
         body {
             margin: 0;
@@ -132,12 +132,24 @@
         let gameOver = false;
 
         // Background elements for parallax
-        const backgroundImage = new Image();
-        backgroundImage.src = 'https://via.placeholder.com/800x400/87ceeb/ffffff?text=Background'; // Placeholder image
+        const backgroundLayers = [
+            { src: 'https://via.placeholder.com/800x400/1e90ff/ffffff?text=Sky+Layer', speed: 0.2 },
+            { src: 'https://via.placeholder.com/800x400/00bfff/ffffff?text=Cloud+Layer', speed: 0.5 },
+            { src: 'https://via.placeholder.com/800x400/4682b4/ffffff?text=City+Layer', speed: 1 }
+        ];
+        const backgrounds = backgroundLayers.map(layer => {
+            const img = new Image();
+            img.src = layer.src;
+            return { img, speed: layer.speed, x: 0 };
+        });
 
         // Lori's character
-        const loriImage = new Image();
-        loriImage.src = 'https://via.placeholder.com/50x75/ff4d4d/ffffff?text=Lori'; // Placeholder for Lori sprite
+        const loriSprites = {
+            idle: 'https://via.placeholder.com/50x75/ff4d4d/ffffff?text=Lori',
+            running: 'https://via.placeholder.com/50x75/ff6347/ffffff?text=Run'
+        };
+        let currentSprite = new Image();
+        currentSprite.src = loriSprites.idle;
 
         const lori = {
             x: 50,
@@ -148,6 +160,7 @@
             velocityY: 0,
             isJumping: false,
             isSprinting: false,
+            isRunning: false
         };
 
         // Gravity and platform logic
@@ -202,14 +215,25 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // Draw parallax background
-            ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height / 2);
+            backgrounds.forEach(bg => {
+                ctx.drawImage(bg.img, bg.x, 0, canvas.width, canvas.height / 2);
+                bg.x -= bg.speed;
+                if (bg.x <= -canvas.width) bg.x = 0;
+            });
 
             // Draw ground
             ctx.fillStyle = '#654321';
             ctx.fillRect(0, groundLevel + lori.height, canvas.width, 50);
 
+            // Update sprite based on movement
+            if (moveRight || moveLeft) {
+                currentSprite.src = loriSprites.running;
+            } else {
+                currentSprite.src = loriSprites.idle;
+            }
+
             // Draw Lori
-            ctx.drawImage(loriImage, lori.x, lori.y, lori.width, lori.height);
+            ctx.drawImage(currentSprite, lori.x, lori.y, lori.width, lori.height);
 
             // Apply gravity
             if (lori.y < groundLevel) {
@@ -282,4 +306,10 @@
         function triggerGameOver() {
             gameOver = true;
             document.getElementById('gameOver').style.display = 'block';
-            canvas.addEventListener('click', () => location.reload());  // Restart on
+            canvas.addEventListener('click', () => location.reload());  // Restart on tap
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html>
