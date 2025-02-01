@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lori: The Offbeat Hero - Pilot Game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background-color: #cce7ff;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #fff;
+            font-size: 18px;
+        }
+
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 36px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="ui">
+        <p>Health: <span id="health">100</span></p>
+        <p>Score: <span id="score">0</span></p>
+        <p>Collectibles: <span id="collectibles">0</span></p>
+    </div>
+    <div id="gameOver">Game Over! Press F5 to Restart</div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Game state variables
+        let score = 0;
+        let health = 100;
+        let collectibles = 0;
+        let gameOver = false;
+
+        // Lori's character
+        const lori = {
+            x: 50,
+            y: canvas.height - 150,
+            width: 50,
+            height: 75,
+            speed: 5,
+            velocityY: 0,
+            isJumping: false,
+            isSprinting: false,
+        };
+
+        // Gravity and platform logic
+        const gravity = 0.5;
+        const groundLevel = canvas.height - lori.height - 50;
+
+        // Collectibles and enemies arrays
+        const items = [];
+        const enemies = [];
+
+        // Controls
+        const keys = {};
+        document.addEventListener('keydown', (e) => keys[e.key] = true);
+        document.addEventListener('keyup', (e) => keys[e.key] = false);
+
+        // Create collectibles
+        for (let i = 0; i < 5; i++) {
+            items.push({
+                x: Math.random() * canvas.width,
+                y: groundLevel - 10,
+                width: 20,
+                height: 20,
+                color: 'gold'
+            });
+        }
+
+        // Create enemies
+        for (let i = 0; i < 3; i++) {
+            enemies.push({
+                x: Math.random() * canvas.width,
+                y: groundLevel,
+                width: 40,
+                height: 60,
+                speed: Math.random() * 3 + 1  // Variable enemy speed
+            });
+        }
+
+        // Game loop
+        function gameLoop() {
+            if (gameOver) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw ground
+            ctx.fillStyle = '#654321';
+            ctx.fillRect(0, groundLevel + lori.height, canvas.width, 50);
+
+            // Draw Lori
+            ctx.fillStyle = '#ff4d4d';
+            ctx.fillRect(lori.x, lori.y, lori.width, lori.height);
+
+            // Apply gravity
+            if (lori.y < groundLevel) {
+                lori.velocityY += gravity;
+                lori.y += lori.velocityY;
+            } else {
+                lori.y = groundLevel;
+                lori.isJumping = false;
+            }
+
+            // Movement logic
+            if (keys['ArrowRight'] || keys['d']) lori.x += lori.speed * (lori.isSprinting ? 2 : 1);
+            if (keys['ArrowLeft'] || keys['a']) lori.x -= lori.speed * (lori.isSprinting ? 2 : 1);
+            if ((keys['ArrowUp'] || keys['w']) && !lori.isJumping) {
+                lori.isJumping = true;
+                lori.velocityY = -10;
+            }
+            if (keys['Shift']) lori.isSprinting = true;
+            else lori.isSprinting = false;
+
+            // Prevent Lori from going off-screen
+            lori.x = Math.max(0, Math.min(canvas.width - lori.width, lori.x));
+
+            // Draw and check collectibles
+            items.forEach((item, index) => {
+                ctx.fillStyle = item.color;
+                ctx.fillRect(item.x, item.y, item.width, item.height);
+                if (isColliding(lori, item)) {
+                    collectibles++;
+                    score += 10;  // Add score when collecting items
+                    items.splice(index, 1); // Remove collected item
+                }
+            });
+
+            // Draw and check enemies
+            enemies.forEach((enemy) => {
+                ctx.fillStyle = 'black';
+                ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+                enemy.x += enemy.speed;
+                if (enemy.x > canvas.width - enemy.width || enemy.x < 0) enemy.speed *= -1;
+
+                if (isColliding(lori, enemy)) {
+                    health -= 0.5;  // Gradual health reduction to give players a chance to recover
+                    if (health <= 0) {
+                        health = 0;
+                        triggerGameOver();
+                    }
+                }
+            });
+
+            // Update UI
+            document.getElementById('health').textContent = Math.max(0, Math.round(health));
+            document.getElementById('score').textContent = score;
+            document.getElementById('collectibles').textContent = collectibles;
+
+            if (!gameOver) requestAnimationFrame(gameLoop);
+        }
+
+        // Collision detection
+        function isColliding(rect1, rect2) {
+            return (
+                rect1.x < rect2.x + rect2.width &&
+                rect1.x + rect1.width > rect2.x &&
+                rect1.y < rect2.y + rect2.height &&
+                rect1.y + rect1.height > rect2.y
+            );
+        }
+
+        // Game over trigger
+        function triggerGameOver() {
+            gameOver = true;
+            document.getElementById('gameOver').style.display = 'block';
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html>
