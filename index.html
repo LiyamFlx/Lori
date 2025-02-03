@@ -105,7 +105,11 @@
             right: [1, 0]
         };
 
-        const audio = new Audio('https://assets.mixkit.co/sfx/download/mixkit-arcade-retro-game-over-213.wav');
+        const audioCollect = new Audio('https://assets.mixkit.co/sfx/download/mixkit-arcade-retro-game-over-213.wav');
+        const audioMove = new Audio('https://assets.mixkit.co/sfx/download/mixkit-arcade-game-jump-coin-216.wav');
+        const backgroundMusic = new Audio('https://assets.mixkit.co/sfx/download/mixkit-retro-game-emergency-alarm-1000.wav');
+        backgroundMusic.loop = true;
+        backgroundMusic.play();
 
         function drawGrid() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -147,6 +151,7 @@
                 hero.x = newX;
                 hero.y = newY;
                 checkCollectible();
+                audioMove.play();
             }
             drawGrid();
         }
@@ -157,7 +162,7 @@
                     score += 10;
                     scoreElement.textContent = score;
                     collectibles.splice(i, 1);
-                    audio.play();
+                    audioCollect.play();
                 }
             }
         }
@@ -170,14 +175,6 @@
 
         // Initialize game
         drawGrid();
-
-        /**
-         * Enhancements Added:
-         * 1. Tile-based background with placeholder graphics.
-         * 2. Collectible item system with glowing collectible animations (optional).
-         * 3. Sound effects for collectible pickup.
-         * 4. Improved grid visuals with hero sprite customization ready.
-         */
     </script>
 </body>
 </html>
